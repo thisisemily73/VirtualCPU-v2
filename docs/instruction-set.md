@@ -1,4 +1,4 @@
-## Instruction Set Architecture (ISA)
+# Instruction Set Architecture (ISA)
 
 ## Overview
 
