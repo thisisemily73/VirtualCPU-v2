@@ -50,19 +50,20 @@ public class ControlUnit {
         int instruction = ir.getInstruction();
 
         // Extract the opcode (top 5 bits) from the instruction.
-        int opcode = (instruction >> 11) & 0b11111;
+        int opcode = Decoder.getOpcode(instruction);
 
         switch (opcode) {
-             case 0b00001: // LOADI
-                int reg = (instruction >> 8) & 0b111;
-                int value = instruction & 0xFF;
+
+            case Opcodes.LOADI:
+                int reg = Decoder.getRegister1(instruction);
+                int value = Decoder.getImmediate(instruction);
 
                 registers.store(reg, value);
                 break;
 
-            case 0b00100: // ADD
-                int r1 = (instruction >> 8) & 0b111;
-                int r2 = (instruction >> 5) & 0b111;
+            case Opcodes.ADD:
+                int r1 = Decoder.getRegister1(instruction);
+                int r2 = Decoder.getRegister2(instruction);
 
                 int result = alu.add(
                     registers.read(r1),
@@ -74,40 +75,42 @@ public class ControlUnit {
                 flags.setZeroFlag(result == 0);
                 break;
 
-            case 0b00101: // SUB
-                r1 = (instruction >> 8) & 0b111;
-                r2 = (instruction >> 5) & 0b111;
+            case Opcodes.SUB:
+                int reg1 = Decoder.getRegister1(instruction);
+                int reg2 = Decoder.getRegister2(instruction);
 
-                result = alu.sub(
-                    registers.read(r1),
-                    registers.read(r2)
+                int subresult = alu.sub(
+                    registers.read(reg1),
+                    registers.read(reg2)
                 );
 
-                registers.store(r1, result);
+                registers.store(reg1, subresult);
 
-                flags.setZeroFlag(result == 0);
+                flags.setZeroFlag(subresult == 0);
                 break;
 
-            case 0b00110: // JMP
-                int address = instruction & 0x0FFF;
+            case Opcodes.JMP:
+                int address = Decoder.getAddress(instruction);
                 pc.set(address);
                 break;
 
-            case 0b00111: // JZ
-                address = instruction & 0x0FFF;
+            case Opcodes.JZ:
+                address = Decoder.getAddress(instruction);
+
                 if (flags.isZeroFlag()) {
                     pc.set(address);
                 }
                 break;
 
-            case 0b01000: // JNZ
-                address = instruction & 0x0FFF;
+            case Opcodes.JNZ:
+                address = Decoder.getAddress(instruction);
+
                 if (!flags.isZeroFlag()) {
                     pc.set(address);
                 }
                 break;
 
-            case 0b11111: // HALT
+            case Opcodes.HALT:
                 return false;
 
             default:

@@ -29,12 +29,12 @@ public class Decoder {
     }
 
     // Extracts the first register (r1) from a 16-bit instruction
-    public static int getR1(int instruction) {
+    public static int getRegister1(int instruction) {
         return (instruction >> 8) & 0b111; // Mask to get 3 bits
     }
 
     // Extracts the second register (r2) from a 16-bit instruction
-    public static int getR2(int instruction) {
+    public static int getRegister2(int instruction) {
         return (instruction >> 5) & 0b111; // Mask to get 3 bits
     }
 
