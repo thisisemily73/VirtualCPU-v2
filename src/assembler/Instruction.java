@@ -18,24 +18,41 @@ package assembler;
 
 public class Instruction {
     private String opcode;
-    private int register;
-    private int value;
 
-    public Instruction(String opcode, int register, int value) {
+    private int registerA;
+    private int registerB;
+
+    private int immediate;
+    private int address;
+
+    // Creates an instruction object
+    // The paser fills in only thee fields needed for that instruction type.
+    public Instruction(String opcode, int registerA, 
+        int registerB, int immediate, int address) {
         this.opcode = opcode;
-        this.register = register;
-        this.value = value;
+        this.registerA = registerA;
+        this.registerB = registerB;
+        this.immediate = immediate;
+        this.address = address;
     }
 
     public String getOpcode() {
         return opcode;
     }
 
-    public int getRegister() {
-        return register;
+    public int getRegisterA() {
+        return registerA;
     }
 
-    public int getValue() {
-        return value;
+    public int getRegisterB() {
+        return registerB;
+    }
+
+    public int getImmediate() {
+        return immediate;
+    }
+
+    public int getAddress() {
+        return address;
     }
 }
