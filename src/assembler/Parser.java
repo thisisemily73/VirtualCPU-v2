@@ -6,78 +6,40 @@ import java.util.List;
 /**
  * Parser
  *
- * Role:
- * Converts tokenized assembly instructions into structured
- * Instruction objects that the assembler can understand.
+ * Converts tokenized assembly instructions into
+ * Instruction objects.
  *
- * The Tokenizer only separates text:
+ * The Tokenizer separates text.
+ * The Parser gives that text meaning.
  *
- *      LOADI R1, 10
+ * Example:
+ *
+ * LOADI R1, 10
  *
  * becomes:
  *
- *      ["LOADI", "R1", "10"]
- *
- * The Parser gives those tokens meaning:
- *
- *      opcode = LOADI
- *      register = 1
- *      value = 10
- *
- * This keeps the InstructionEncoder from having to
- * interpret raw text.
+ * opcode = LOADI
+ * registerA = 1
+ * immediate = 10
  */
 
 public class Parser {
 
 
     /**
-     * Converts a list of token arrays into Instruction objects.
-     *
-     * Example:
-     *
-     * Input:
-     * ["LOADI", "R1", "10"]
-     *
-     * Output:
-     * Instruction(
-     *      opcode = LOADI,
-     *      register = 1,
-     *      value = 10
-     * )
+     * Converts token arrays into Instruction objects.
      */
     public List<Instruction> parse(List<String[]> tokens) {
 
 
-        // Stores all parsed instructions from the program
         List<Instruction> instructions = new ArrayList<>();
 
 
-        // Process each assembly instruction individually
         for (String[] token : tokens) {
 
 
-            // The first token is always the instruction name
-            // Example: "LOADI", "ADD", "HALT"
             String opcode = token[0];
 
-
-            /*
-             * Different instructions have different formats.
-             *
-             * Example:
-             *
-             * LOADI R1, 10
-             *      opcode register immediate
-             *
-             * ADD R1, R2
-             *      opcode register register
-             *
-             * HALT
-             *      opcode only
-             *
-             * The parser handles these differences here.
-             */
 
             switch(opcode) {
 
@@ -85,22 +47,28 @@ public class Parser {
                 case "LOADI":
 
                     /*
-                     * Convert register name:
+                     * Format:
                      *
-                     * "R1" → 1
+                     * LOADI register, immediate
                      *
-                     * Convert immediate value:
+                     * Example:
                      *
-                     * "10" → 10
+                     * LOADI R1, 10
                      */
 
-                    int register = parseRegister(token[1]);
-                    int value = Integer.parseInt(token[2]);
+                    int loadRegister = parseRegister(token[1]);
+
+                    int immediate = Integer.parseInt(token[2]);
 
 
-                    // Create a structured instruction object
                     instructions.add(
-                        new Instruction(opcode, register, value)
+                        new Instruction(
+                            opcode,
+                            loadRegister,
+                            0,
+                            immediate,
+                            0
+                        )
                     );
 
                     break;
@@ -110,24 +78,28 @@ public class Parser {
                 case "ADD":
 
                     /*
-                     * ADD uses two registers:
+                     * Format:
+                     *
+                     * ADD destination, source
+                     *
+                     * Example:
                      *
                      * ADD R1, R2
-                     *
-                     * destination = R1
-                     * source = R2
-                     *
-                     * The Instruction class stores
-                     * these values in register and value.
                      */
 
-                    int reg1 = parseRegister(token[1]);
+                    int destination = parseRegister(token[1]);
 
-                    int reg2 = parseRegister(token[2]);
+                    int source = parseRegister(token[2]);
 
 
                     instructions.add(
-                        new Instruction(opcode, reg1, reg2)
+                        new Instruction(
+                            opcode,
+                            destination,
+                            source,
+                            0,
+                            0
+                        )
                     );
 
                     break;
@@ -138,13 +110,16 @@ public class Parser {
 
                     /*
                      * HALT has no operands.
-                     *
-                     * The register and value fields are unused,
-                     * so they are set to 0.
                      */
 
                     instructions.add(
-                        new Instruction(opcode, 0, 0)
+                        new Instruction(
+                            opcode,
+                            0,
+                            0,
+                            0,
+                            0
+                        )
                     );
 
                     break;
@@ -153,17 +128,6 @@ public class Parser {
 
                 default:
 
-                    /*
-                     * Prevent invalid instructions from silently
-                     * entering the assembler.
-                     *
-                     * Example:
-                     *
-                     * LOADD R1, 10
-                     *
-                     * would be rejected here.
-                     */
-
                     throw new IllegalArgumentException(
                         "Unknown instruction: " + opcode
                     );
@@ -171,27 +135,22 @@ public class Parser {
         }
 
 
-        // Return all parsed instructions
         return instructions;
     }
 
 
 
     /**
-     * Converts a register string into its numeric ID.
+     * Converts register text into a register ID.
      *
      * Example:
      *
-     * "R3" → 3
-     *
-     * This matches the CPU's register architecture:
-     * R0-R7 are represented using 3 bits.
+     * R3 → 3
      */
     private int parseRegister(String register) {
 
 
         // Remove the "R" prefix
-        // Then convert the remaining number into an integer
         return Integer.parseInt(
             register.substring(1)
         );

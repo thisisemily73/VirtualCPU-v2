@@ -1,7 +1,6 @@
 package tests;
 
 import assembler.*;
-
 import java.util.List;
 
 
@@ -36,9 +35,11 @@ public class ParserTest {
             System.out.println(
                 instruction.getOpcode()
                 + " "
-                + instruction.getRegister()
+                + instruction.getRegisterA()
                 + " "
-                + instruction.getValue()
+                + instruction.getImmediate()
+                + " "
+                + instruction.getRegisterB()
             );
         }
     }
