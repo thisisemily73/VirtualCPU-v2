@@ -1,7 +1,6 @@
 package tests;
 
 import assembler.*;
-
 import java.util.List;
 
 
@@ -31,9 +30,13 @@ public class AssemblerTest {
             System.out.println(
                 instruction.getOpcode()
                 + " "
-                + instruction.getRegister()
+                + instruction.getRegisterA()
                 + " "
-                + instruction.getValue()
+                + instruction.getImmediate()
+                + " "
+                + instruction.getRegisterB()
+                + " "
+                + instruction.getAddress()
             );
         }
     }

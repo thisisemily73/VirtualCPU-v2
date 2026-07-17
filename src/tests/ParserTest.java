@@ -40,6 +40,8 @@ public class ParserTest {
                 + instruction.getImmediate()
                 + " "
                 + instruction.getRegisterB()
+                + " "
+                + instruction.getAddress()
             );
         }
     }
