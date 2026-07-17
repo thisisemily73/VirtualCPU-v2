@@ -1,6 +1,7 @@
 package tests;
 
 import assembler.*;
+import util.BinaryFormatter;
 
 public class EncoderTest {
 
@@ -43,21 +44,21 @@ public class EncoderTest {
 
 
         System.out.println(
-            Integer.toBinaryString(
+            BinaryFormatter.toBinaryString(
                 encoder.encode(load)
             )
         );
 
 
         System.out.println(
-            Integer.toBinaryString(
+            BinaryFormatter.toBinaryString(
                 encoder.encode(add)
             )
         );
 
 
         System.out.println(
-            Integer.toBinaryString(
+            BinaryFormatter.toBinaryString(
                 encoder.encode(halt)
             )
         );
