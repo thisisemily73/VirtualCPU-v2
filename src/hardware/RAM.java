@@ -16,8 +16,8 @@ public class RAM {
 
     private int[] memory;
 
-    public RAM() {
-        memory = new int[4096]; // 4096 memory locations
+    public RAM(int size) {
+        memory = new int[size]; // 4096 memory locations
     }
 
     /**

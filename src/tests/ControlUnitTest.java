@@ -21,7 +21,7 @@ public class ControlUnitTest {
 
         // --- Initialize all CPU components ---
         RegisterFile registers = new RegisterFile();
-        RAM ram = new RAM();
+        RAM ram = new RAM(4096);
         ALU alu = new ALU();
         ProgramCounter pc = new ProgramCounter();
         FlagsRegister flags = new FlagsRegister();

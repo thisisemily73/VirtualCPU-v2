@@ -6,7 +6,7 @@ public class RAMTest {
 
     public static void main(String[] args) {
 
-        RAM ram = new RAM();
+        RAM ram = new RAM(4096);
 
         ram.write(100, 42);
 
