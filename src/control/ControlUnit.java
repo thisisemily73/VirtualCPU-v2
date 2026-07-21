@@ -5,8 +5,7 @@ import hardware.*;
 /**
  * ControlUnit (CU)
  *
- * Role in CPU:
- * Decodes instructions and coordinates execution.
+ * Role in CPU: Decodes instructions and coordinates execution.
  *
  * Responsibilities:
  * - Reads instruction from InstructionRegister
@@ -20,8 +19,8 @@ import hardware.*;
  * - ProgramCounter
  * - FlagsRegister
  */
-
 public class ControlUnit {
+
     private RegisterFile registers;
     private RAM ram;
     private ALU alu;
@@ -30,8 +29,9 @@ public class ControlUnit {
     private InstructionRegister ir;
 
     public ControlUnit(RegisterFile registers, RAM ram,
-        ALU alu, ProgramCounter pc, FlagsRegister flags,
-        InstructionRegister ir) {
+                       ALU alu, ProgramCounter pc,
+                       FlagsRegister flags,
+                       InstructionRegister ir) {
         this.registers = registers;
         this.ram = ram;
         this.alu = alu;
@@ -42,73 +42,138 @@ public class ControlUnit {
 
     /**
      * Executes the instruction currently in the InstructionRegister.
-     *
-     * This method decodes the instruction and performs the appropriate action.
      */
-
     public boolean execute() {
         int instruction = ir.getInstruction();
-
-        // Extract the opcode (top 5 bits) from the instruction.
         int opcode = Decoder.getOpcode(instruction);
 
         switch (opcode) {
-
-            case Opcodes.LOADI:
-                int reg = Decoder.getRegister1(instruction);
-                int value = Decoder.getImmediate(instruction);
-
-                registers.store(reg, value);
+            case Opcodes.LOADI: {
+                // LOADI Rd, imm  ->  Rd = imm
+                int rd = Decoder.getRd(instruction);
+                int imm = Decoder.getImmediate(instruction);
+                registers.store(rd, imm);
                 break;
+            }
 
-            case Opcodes.ADD:
-                int r1 = Decoder.getRegister1(instruction);
-                int r2 = Decoder.getRegister2(instruction);
+            // Arithmetic
+
+            case Opcodes.ADD: {
+                // ADD Rd, Ra, Rb  ->  Rd = Ra + Rb
+                int rd = Decoder.getRd(instruction);
+                int ra = Decoder.getRa(instruction);
+                int rb = Decoder.getRb(instruction);
 
                 int result = alu.add(
-                    registers.read(r1),
-                    registers.read(r2)
+                    registers.read(ra),
+                    registers.read(rb)
                 );
-
-                registers.store(r1, result);
-
+                registers.store(rd, result);
                 flags.setZeroFlag(result == 0);
                 break;
+            }
 
-            case Opcodes.SUB:
-                int reg1 = Decoder.getRegister1(instruction);
-                int reg2 = Decoder.getRegister2(instruction);
+            case Opcodes.SUB: {
+                // SUB Rd, Ra, Rb  ->  Rd = Ra - Rb
+                int rd = Decoder.getRd(instruction);
+                int ra = Decoder.getRa(instruction);
+                int rb = Decoder.getRb(instruction);
 
-                int subresult = alu.sub(
-                    registers.read(reg1),
-                    registers.read(reg2)
+                int result = alu.sub(
+                    registers.read(ra),
+                    registers.read(rb)
                 );
-
-                registers.store(reg1, subresult);
-
-                flags.setZeroFlag(subresult == 0);
+                registers.store(rd, result);
+                flags.setZeroFlag(result == 0);
                 break;
+            }
 
-            case Opcodes.JMP:
-                int address = Decoder.getAddress(instruction);
-                pc.set(address);
+            // Logic
+
+            case Opcodes.AND: {
+                // AND Rd, Ra, Rb  ->  Rd = Ra & Rb
+                int rd = Decoder.getRd(instruction);
+                int ra = Decoder.getRa(instruction);
+                int rb = Decoder.getRb(instruction);
+
+                int result = alu.and(
+                    registers.read(ra),
+                    registers.read(rb)
+                );
+                registers.store(rd, result);
+                flags.setZeroFlag(result == 0);
                 break;
+            }
 
-            case Opcodes.JZ:
-                address = Decoder.getAddress(instruction);
+            case Opcodes.OR: {
+                // OR  Rd, Ra, Rb  ->  Rd = Ra | Rb
+                int rd = Decoder.getRd(instruction);
+                int ra = Decoder.getRa(instruction);
+                int rb = Decoder.getRb(instruction);
 
+                int result = alu.or(
+                    registers.read(ra),
+                    registers.read(rb)
+                );
+                registers.store(rd, result);
+                flags.setZeroFlag(result == 0);
+                break;
+            }
+
+            case Opcodes.XOR: {
+                // XOR Rd, Ra, Rb  ->  Rd = Ra ^ Rb
+                int rd = Decoder.getRd(instruction);
+                int ra = Decoder.getRa(instruction);
+                int rb = Decoder.getRb(instruction);
+
+                int result = alu.xor(
+                    registers.read(ra),
+                    registers.read(rb)
+                );
+                registers.store(rd, result);
+                flags.setZeroFlag(result == 0);
+                break;
+            }
+
+            case Opcodes.NOT: {
+                // NOT Rd, Ra  ->  Rd = ~Ra
+                int rd = Decoder.getRd(instruction);
+                int ra = Decoder.getRa(instruction);
+
+                int result = alu.not(registers.read(ra));
+                registers.store(rd, result);
+                flags.setZeroFlag(result == 0);
+                break;
+            }
+
+            // Control Flow
+
+            case Opcodes.JMP: {
+                // JMP addr  ->  PC = addr
+                int addr = Decoder.getAddress(instruction);
+                pc.set(addr);
+                break;
+            }
+
+            case Opcodes.JZ: {
+                // JZ addr  ->  if Z then PC = addr
+                int addr = Decoder.getAddress(instruction);
                 if (flags.isZeroFlag()) {
-                    pc.set(address);
+                    pc.set(addr);
                 }
                 break;
+            }
 
-            case Opcodes.JNZ:
-                address = Decoder.getAddress(instruction);
-
+            case Opcodes.JNZ: {
+                // JNZ addr  ->  if !Z then PC = addr
+                int addr = Decoder.getAddress(instruction);
                 if (!flags.isZeroFlag()) {
-                    pc.set(address);
+                    pc.set(addr);
                 }
                 break;
+            }
+
+            // System
 
             case Opcodes.HALT:
                 return false;
@@ -120,5 +185,4 @@ public class ControlUnit {
 
         return true;
     }
-
 }

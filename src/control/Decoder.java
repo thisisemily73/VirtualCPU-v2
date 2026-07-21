@@ -8,7 +8,7 @@ package control;
  * Instruction formats supported:
  *
  * R-type:
- * [ opcode (5) | r1 (3) | r2 (3) | unused (5) ]
+ * [ opcode (5) | Rd (3) | Ra (3) | Rb (3) | unused (2) ]
  *
  * I-type:
  * [ opcode (5) | reg (3) | immediate (8) ]
@@ -28,14 +28,19 @@ public class Decoder {
         return (instruction >> 11) & 0b11111; // Mask to get 5 bits
     }
 
-    // Extracts the first register (r1) from a 16-bit instruction
-    public static int getRegister1(int instruction) {
+    // Extracts the first register (Rd) from a 16-bit instruction
+    public static int getRd(int instruction) {
         return (instruction >> 8) & 0b111; // Mask to get 3 bits
     }
 
-    // Extracts the second register (r2) from a 16-bit instruction
-    public static int getRegister2(int instruction) {
+    // Extracts the second register (Ra) from a 16-bit instruction
+    public static int getRa(int instruction) {
         return (instruction >> 5) & 0b111; // Mask to get 3 bits
+    }
+
+    // Extracts the third register (Rb) from a 16-bit instruction
+    public static int getRb(int instruction) {
+        return (instruction >> 2) & 0b111; // Mask to get 3 bits
     }
 
     // Extracts the immediate value (last 8 bits) from a 16-bit instruction

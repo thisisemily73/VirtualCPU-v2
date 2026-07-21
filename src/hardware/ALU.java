@@ -12,39 +12,47 @@ package hardware;
  * - FlagsRegister (sets condition flags based on results)
  */
 public class ALU {
+
     /**
      * Adds two 16-bit values.
      */
     public int add(int a, int b) {
-        return (a + b) & 0xFFFF; // Ensure only the lower 16 bits are returned
+        return (a + b) & 0xFFFF;
     }
 
     /**
      * Subtracts two 16-bit values.
      */
     public int sub(int a, int b) {
-        return (a - b) & 0xFFFF; // Ensure only the lower 16 bits are returned
+        return (a - b) & 0xFFFF;
     }
 
     /**
      * Performs a bitwise AND operation on two 16-bit values.
      */
     public int and(int a, int b) {
-        return a & b;
+        return (a & b) & 0xFFFF;
     }
 
     /**
      * Performs a bitwise OR operation on two 16-bit values.
      */
     public int or(int a, int b) {
-        return a | b;
+        return (a | b) & 0xFFFF;
+    }
+
+    /**
+     * Performs a bitwise XOR operation on two 16-bit values.
+     */
+    public int xor(int a, int b) {
+        return (a ^ b) & 0xFFFF;
     }
 
     /**
      * Performs a bitwise NOT operation on a 16-bit value.
      */
     public int not(int a) {
-        return (~a) & 0xFFFF; // Ensure only the lower 16 bits are returned
+        return (~a) & 0xFFFF;
     }
 
     /**
