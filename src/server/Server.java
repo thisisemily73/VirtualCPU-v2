@@ -1,53 +1,27 @@
 package server;
 
-import assembler.Assembler;
-import com.sun.net.httpserver.*;
-import hardware.*;
-import java.io.*;
+import com.sun.net.httpserver.HttpServer;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 
 public class Server {
+    private static final int PORT = 8080;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
+        CPUService cpuService = new CPUService();
+        CPUController cpuController = new CPUController(cpuService);
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
 
-        server.createContext("/run", exchange -> {
+        server.createContext("/api/cpu/health", cpuController.healthHandler());
+        server.createContext("/api/cpu/state", cpuController.stateHandler());
+        server.createContext("/api/cpu/step", cpuController.stepHandler());
+        server.createContext("/api/cpu/reset", cpuController.resetHandler());
+        server.createContext("/api/cpu/load", cpuController.loadHandler());
 
-            InputStream is = exchange.getRequestBody();
-            String source = new String(is.readAllBytes());
-
-            // STEP 1: Assemble text → machine code
-            Assembler assembler = new Assembler();
-            java.util.List<Integer> machineCode = assembler.assemble(source);
-
-            // STEP 2: Load into RAM
-            RAM ram = new RAM(4096);
-
-            for (int i = 0; i < machineCode.size(); i++) {
-                ram.write(i, machineCode.get(i));
-            }
-
-            // STEP 3: Run CPU
-            CPU cpu = new CPU(ram);
-
-            boolean running = true;
-            while (running) {
-                running = cpu.step();   // stops on HALT
-            }
-
-            // STEP 4: Read result
-            int r1 = cpu.getRegisters().read(1);
-
-            String response = "R1 = " + r1;
-
-            exchange.sendResponseHeaders(200, response.length());
-            OutputStream os = exchange.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        });
-
+        server.setExecutor(null);
         server.start();
-        System.out.println("Server running on http://localhost:8080");
+
+        System.out.println("CPU API server running at http://localhost:" + PORT);
     }
 }

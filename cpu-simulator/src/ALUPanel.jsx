@@ -1,4 +1,3 @@
-// AluPanel.jsx
 export default function AluPanel({ alu, selected, onSelect }) {
   return (
     <section className={`state-panel ${selected === 'ALU' ? 'active' : ''}`}>

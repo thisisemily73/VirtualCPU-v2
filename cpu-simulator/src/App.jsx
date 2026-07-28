@@ -1,57 +1,154 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
 import RegisterPanel from './RegisterPanel';
 import AluPanel from './ALUPanel';
 
 const DEFAULT_ASSEMBLY = `; Simple Addition Program
-MOV R1, #5
-MOV R2, #10
+LOAD R1, 5
+LOAD R2, 10
 ADD R3, R1, R2
 STORE R3, 0x100`;
+
+const EMPTY_CPU_STATE = {
+  pc: 0,
+  registers: [0, 0, 0, 0, 0, 0, 0, 0],
+  alu: 0,
+  zeroFlag: false,
+  carryFlag: false,
+  negativeFlag: false,
+  currentInstruction: 0,
+  currentLine: 0,
+  halted: false,
+};
 
 export default function App() {
   const [assemblyCode, setAssemblyCode] = useState(DEFAULT_ASSEMBLY);
   const [currentLine, setCurrentLine] = useState(0);
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [cpuState, setCpuState] = useState(EMPTY_CPU_STATE);
+  const [status, setStatus] = useState('idle');
 
-  const [cpuState, setCpuState] = useState({
-    pc: '0x0002',
-    registers: { R1: 5, R2: 10, R3: 15, R4: 0 },
-    alu: { op: 'ADD', inA: 5, inB: 10, out: 15, flags: { Z: 0, N: 0 } },
-    activeBus: 'ALU_TO_REG',
-  });
-
-  const handleStep = () => {
-    const lines = assemblyCode.split('\n');
-    setCurrentLine((prev) => (prev + 1) % lines.length);
-
-    setCpuState((prev) => {
-      const result = prev.registers.R1 + prev.registers.R2;
-
-      return {
-        ...prev,
-        pc: `0x${(parseInt(prev.pc, 16) + 1).toString(16).padStart(4, '0')}`,
-        registers: {
-          ...prev.registers,
-          R3: result,
-        },
-        alu: {
-          ...prev.alu,
-          op: 'ADD',
-          inA: prev.registers.R1,
-          inB: prev.registers.R2,
-          out: result,
-          flags: {
-            Z: result === 0 ? 1 : 0,
-            N: result < 0 ? 1 : 0,
-          },
-        },
-        activeBus: 'ALU_TO_REG',
-      };
+  const api = async (url, options = {}) => {
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
+      ...options,
     });
+
+    if (!res.ok) {
+      throw new Error(`Request failed: ${res.status}`);
+    }
+
+    return res.json();
   };
+
+  const syncState = async () => {
+    setStatus('loading state');
+
+    try {
+      const res = await fetch(
+        'http://localhost:8080/api/cpu/state'
+      );
+
+      const data = await res.json();
+
+      setCpuState(data);
+      setCurrentLine(data.currentLine ?? 0);
+      setStatus('state loaded');
+
+    } catch (err) {
+      setStatus(`error: ${err.message}`);
+    }
+  };
+
+  // useEffect(() => {
+  //   syncState();
+  // }, []);
+
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const id = setInterval(() => {
+      handleStep();
+    }, 500);
+
+    return () => clearInterval(id);
+  }, [isRunning]);
+
+  const handleStep = async () => {
+    console.log("CLICKED STEP");
+
+    try {
+      const res = await fetch(
+        'http://localhost:8080/api/cpu/step',
+        {
+          method: 'POST'
+        }
+      );
+
+      const data = await res.json();
+
+      console.log("DATA:", data);
+
+      setCpuState(data);
+      setCurrentLine(data.currentLine ?? 0);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleReset = async () => {
+    setStatus('resetting');
+    try {
+      const data = await api(
+        'http://localhost:8080/api/cpu/reset',
+        { method: 'POST' }
+      );
+      setCpuState(data);
+      setCurrentLine(0);
+      setIsRunning(false);
+      setStatus('reset done');
+    } catch (err) {
+      setStatus(`error: ${err.message}`);
+    }
+  };
+
+  const handleLoad = async () => {
+    const program = [2309, 32768]; // temporary real program
+
+    const res = await fetch("http://localhost:8080/api/cpu/load", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(program)
+    });
+
+    const data = await res.json();
+    setCpuState(data);
+  };
+
+  const registersObj = Object.fromEntries(
+    (cpuState.registers || []).map((v, i) => [`R${i + 1}`, v])
+  );
+
+  const aluObj = {
+    op: 'ADD',
+    inA: cpuState.registers?.[0] ?? 0,
+    inB: cpuState.registers?.[1] ?? 0,
+    out: cpuState.alu ?? 0,
+    flags: {
+      Z: cpuState.zeroFlag ? 1 : 0,
+      N: cpuState.negativeFlag ? 1 : 0,
+    },
+  };
+
+  const activeBus = cpuState.halted ? 'HALTED' : 'ALU_TO_REG';
 
   return (
     <div className="app-container">
@@ -60,6 +157,7 @@ export default function App() {
           <h1>Virtual CPU Visualizer</h1>
           <p>Explore computer architecture from 3D hardware down to assembly logic.</p>
           <div className="scroll-indicator">Scroll down to explore ↓</div>
+          <div className="badge">{status}</div>
         </div>
 
         <div className="hero-3d-placeholder">
@@ -80,8 +178,11 @@ export default function App() {
             >
               {isRunning ? '⏸ Pause' : '▶ Run'}
             </button>
-            <button className="btn secondary" onClick={() => setCurrentLine(0)}>
+            <button className="btn secondary" onClick={handleReset}>
               ↺ Reset
+            </button>
+            <button className="btn secondary" onClick={handleLoad}>
+              ⬆ Load Program
             </button>
           </div>
         </header>
@@ -95,13 +196,13 @@ export default function App() {
 
             <div className="state-stack">
               <AluPanel
-                alu={cpuState.alu}
+                alu={aluObj}
                 selected={selectedComponent}
                 onSelect={setSelectedComponent}
               />
 
               <RegisterPanel
-                registers={cpuState.registers}
+                registers={registersObj}
                 selected={selectedComponent}
                 onSelect={setSelectedComponent}
               />
@@ -111,10 +212,12 @@ export default function App() {
                 onClick={() => setSelectedComponent('CU')}
               >
                 <h4>Control Unit</h4>
-                <div className="node-val">PC: {cpuState.pc}</div>
+                <div className="node-val">
+                  PC: 0x{Number(cpuState.pc || 0).toString(16).padStart(4, '0')}
+                </div>
               </div>
 
-              <div className={`bus-line ${cpuState.activeBus}`}>
+              <div className={`bus-line ${activeBus}`}>
                 <span className="bus-label">Data Bus</span>
               </div>
             </div>
@@ -161,9 +264,9 @@ export default function App() {
               {selectedComponent === 'ALU' && (
                 <div>
                   <p><strong>Arithmetic Logic Unit:</strong> Performs math and logic operations.</p>
-                  <p>Input A: {cpuState.alu.inA} | Input B: {cpuState.alu.inB}</p>
-                  <p>Result: {cpuState.alu.out}</p>
-                  <p>Flags: Z={cpuState.alu.flags.Z}, N={cpuState.alu.flags.N}</p>
+                  <p>Input A: {aluObj.inA} | Input B: {aluObj.inB}</p>
+                  <p>Result: {aluObj.out}</p>
+                  <p>Flags: Z={aluObj.flags.Z}, N={aluObj.flags.N}</p>
                 </div>
               )}
 
@@ -171,7 +274,7 @@ export default function App() {
                 <div>
                   <p><strong>Register File:</strong> High-speed internal storage locations.</p>
                   <ul>
-                    {Object.entries(cpuState.registers).map(([r, v]) => (
+                    {Object.entries(registersObj).map(([r, v]) => (
                       <li key={r}>
                         <strong>{r}:</strong> {v}
                       </li>

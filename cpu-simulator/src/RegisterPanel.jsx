@@ -1,4 +1,3 @@
-// RegisterPanel.jsx
 export default function RegisterPanel({ registers, selected, onSelect }) {
   return (
     <section className={`state-panel ${selected === 'REGISTERS' ? 'active' : ''}`}>
@@ -12,7 +11,7 @@ export default function RegisterPanel({ registers, selected, onSelect }) {
           <button
             key={reg}
             className="register-chip"
-            onClick={() => onSelect?.(`Register ${reg}`)}
+            onClick={() => onSelect?.('REGISTERS')}
           >
             <span>{reg}</span>
             <strong>{value}</strong>
