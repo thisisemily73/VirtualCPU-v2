@@ -49,6 +49,10 @@ public class ControlUnit {
         int instruction = ir.getInstruction();
         int opcode = Decoder.getOpcode(instruction);
 
+        System.out.println("EXECUTING OPCODE: " + opcode + " AT PC: " + pc.get());
+        System.out.println("RAW INSTRUCTION: " + instruction);
+
+        
         switch (opcode) {
             case Opcodes.LOADI: {
                 // LOADI Rd, imm  ->  Rd = imm

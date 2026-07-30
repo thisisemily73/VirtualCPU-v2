@@ -46,15 +46,21 @@ public class CPU {
     }
 
     public boolean step() {
+
         int address = pc.get();
         int instruction = ram.read(address);
+
+        System.out.println(
+                "PC=" + address
+                + " Instruction=" + instruction
+        );
 
         bus.send(instruction);
         ir.loadFromBus(bus);
 
         pc.increment();
 
-        return controlUnit.execute(); // <-- THIS MATTERS
+        return controlUnit.execute();
     }
 
     public static class ALUSnapshot {

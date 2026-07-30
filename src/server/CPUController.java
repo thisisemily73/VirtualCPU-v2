@@ -86,12 +86,16 @@ public class CPUController {
             }
 
             byte[] body = exchange.getRequestBody().readAllBytes();
-            String text = new String(body, StandardCharsets.UTF_8).trim();
+            String json = new String(body, StandardCharsets.UTF_8);
 
-            int[] program = parseIntArray(text);
-            cpuService.loadProgram(program);
+            String code = json
+                    .replace("{\"code\":\"", "")
+                    .replace("\"}", "")
+                    .replace("\\n", "\n");
 
-            sendJson(exchange, 200, gson.toJson(cpuService.getState()));
+            CPUStateDTO state = cpuService.loadAssembly(code);
+
+            sendJson(exchange, 200, toJson(state));
         };
     }
 
@@ -108,11 +112,15 @@ public class CPUController {
     private static int[] parseIntArray(String text) {
         text = text.trim();
 
-        if (text.isEmpty() || text.equals("[]")) return new int[0];
+        if (text.isEmpty() || text.equals("[]")) {
+            return new int[0];
+        }
 
         text = text.replace("[", "").replace("]", "").trim();
 
-        if (text.isEmpty()) return new int[0];
+        if (text.isEmpty()) {
+            return new int[0];
+        }
 
         String[] parts = text.split(",");
         int[] out = new int[parts.length];
@@ -122,5 +130,38 @@ public class CPUController {
         }
 
         return out;
+    }
+
+    private static String toJson(CPUStateDTO s) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("{");
+        sb.append("\"pc\":").append(s.pc).append(",");
+        sb.append("\"registers\":[");
+
+        for (int i = 0; i < s.registers.length; i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            sb.append(s.registers[i]);
+        }
+
+        sb.append("],");
+        sb.append("\"alu\":{");
+        sb.append("\"inputA\":").append(s.alu.inputA).append(",");
+        sb.append("\"inputB\":").append(s.alu.inputB).append(",");
+        sb.append("\"output\":").append(s.alu.output);
+        sb.append("},");
+
+        sb.append("\"zeroFlag\":").append(s.zeroFlag).append(",");
+        sb.append("\"carryFlag\":").append(s.carryFlag).append(",");
+        sb.append("\"negativeFlag\":").append(s.negativeFlag).append(",");
+        sb.append("\"currentInstruction\":").append(s.currentInstruction).append(",");
+        sb.append("\"currentLine\":").append(s.currentLine).append(",");
+        sb.append("\"halted\":").append(s.halted);
+
+        sb.append("}");
+
+        return sb.toString();
     }
 }

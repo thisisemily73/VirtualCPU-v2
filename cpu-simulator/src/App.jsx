@@ -8,7 +8,8 @@ const DEFAULT_ASSEMBLY = `; Simple Addition Program
 LOAD R1, 5
 LOAD R2, 10
 ADD R3, R1, R2
-STORE R3, 0x100`;
+STORE R3, 0x100
+HALT`;
 
 const EMPTY_CPU_STATE = {
   pc: 0,
@@ -83,15 +84,21 @@ export default function App() {
   useEffect(() => {
     if (!isRunning) return;
 
-    const id = setInterval(() => {
-      handleStep();
+    const id = setInterval(async () => {
+
+      const data = await handleStep();
+
+      if (data.halted) {
+        setIsRunning(false);
+      }
+
     }, 500);
 
     return () => clearInterval(id);
+
   }, [isRunning]);
 
   const handleStep = async () => {
-    console.log("CLICKED STEP");
 
     try {
       const res = await fetch(
@@ -107,6 +114,8 @@ export default function App() {
 
       setCpuState(data);
       setCurrentLine(data.currentLine ?? 0);
+
+      return data;   // ADD THIS
 
     } catch (err) {
       console.error(err);
@@ -130,23 +139,24 @@ export default function App() {
   };
 
   const handleLoad = async () => {
-    const program = [2309, 32768]; // temporary real program
 
-    const res = await fetch("http://localhost:8080/api/cpu/load", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(program)
-    });
+    const res = await fetch(
+      "http://localhost:8080/api/cpu/load",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          code: assemblyCode
+        })
+      }
+    );
 
-    const text = await res.text();
+    const data = await res.json();
 
-    console.log("SERVER RESPONSE:", text);
+    console.log("LOADED:", data);
 
-    const data = JSON.parse(text);
-
-    setCpuState(data);
     setCpuState(data);
   };
 

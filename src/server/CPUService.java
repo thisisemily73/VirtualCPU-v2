@@ -1,5 +1,8 @@
 package server;
 
+import java.util.List;
+
+import assembler.Assembler;
 import hardware.CPU;
 import hardware.RAM;
 
@@ -23,9 +26,13 @@ public class CPUService {
 
     public synchronized void loadProgram(int[] program) {
         reset();
+
+        System.out.println("PROGRAM LENGTH: " + program.length);
+
         for (int i = 0; i < program.length; i++) {
-            ram.write(i, program[i]);
+            System.out.println(i + ": " + program[i]);
         }
+
         halted = false;
     }
 
@@ -82,5 +89,52 @@ public class CPUService {
         s.halted = halted;
 
         return s;
+    }
+
+    public synchronized CPUStateDTO loadAssembly(String code) {
+        // remove comment lines
+        StringBuilder cleaned = new StringBuilder();
+
+        for (String line : code.split("\n")) {
+            line = line.trim();
+
+            if (line.isEmpty()) {
+                continue;
+            }
+            if (line.startsWith(";")) {
+                continue;
+            }
+
+            cleaned.append(line).append("\n");
+        }
+
+        code = cleaned.toString();
+
+        System.out.println("RECEIVED ASSEMBLY:");
+        System.out.println(code);
+
+        Assembler assembler = new Assembler();
+
+        List<Integer> machineCode;
+
+        try {
+            machineCode = assembler.assemble(code);
+        } catch (Exception e) {
+            System.out.println("ASSEMBLER CRASHED:");
+            e.printStackTrace();
+            machineCode = new java.util.ArrayList<>();
+        }
+
+        System.out.println("MACHINE CODE:");
+        System.out.println(machineCode);
+
+        reset();
+
+        for (int i = 0; i < machineCode.size(); i++) {
+            System.out.println("RAM[" + i + "] = " + machineCode.get(i));
+            ram.write(i, machineCode.get(i));
+        }
+
+        return getState();
     }
 }
