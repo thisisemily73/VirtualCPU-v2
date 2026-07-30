@@ -13,7 +13,12 @@ STORE R3, 0x100`;
 const EMPTY_CPU_STATE = {
   pc: 0,
   registers: [0, 0, 0, 0, 0, 0, 0, 0],
-  alu: 0,
+  alu: {
+    inputA: 0,
+    inputB: 0,
+    output: 0,
+    operation: "IDLE"
+  },
   zeroFlag: false,
   carryFlag: false,
   negativeFlag: false,
@@ -54,9 +59,15 @@ export default function App() {
         'http://localhost:8080/api/cpu/state'
       );
 
-      const data = await res.json();
+      const text = await res.text();
+
+      console.log("SERVER RESPONSE:", text);
+
+      const data = JSON.parse(text);
 
       setCpuState(data);
+
+
       setCurrentLine(data.currentLine ?? 0);
       setStatus('state loaded');
 
@@ -129,7 +140,13 @@ export default function App() {
       body: JSON.stringify(program)
     });
 
-    const data = await res.json();
+    const text = await res.text();
+
+    console.log("SERVER RESPONSE:", text);
+
+    const data = JSON.parse(text);
+
+    setCpuState(data);
     setCpuState(data);
   };
 
@@ -138,10 +155,10 @@ export default function App() {
   );
 
   const aluObj = {
-    op: 'ADD',
-    inA: cpuState.registers?.[0] ?? 0,
-    inB: cpuState.registers?.[1] ?? 0,
-    out: cpuState.alu ?? 0,
+    op: cpuState.alu?.operation ?? 'IDLE',
+    inA: cpuState.alu?.inputA ?? 0,
+    inB: cpuState.alu?.inputB ?? 0,
+    out: cpuState.alu?.output ?? 0,
     flags: {
       Z: cpuState.zeroFlag ? 1 : 0,
       N: cpuState.negativeFlag ? 1 : 0,

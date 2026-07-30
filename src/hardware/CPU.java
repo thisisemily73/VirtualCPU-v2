@@ -30,10 +30,48 @@ public class CPU {
                 alu,
                 pc,
                 flags,
-                ir
+                ir,
+                this
         );
     }
 
+    public CPUState getState() {
+        return new CPUState(
+                pc.get(),
+                ir.getInstruction(),
+                registers.getAll(),
+                ram.getAll(),
+                flags.isZeroFlag()
+        );
+    }
+
+    public boolean step() {
+        int address = pc.get();
+        int instruction = ram.read(address);
+
+        bus.send(instruction);
+        ir.loadFromBus(bus);
+
+        pc.increment();
+
+        return controlUnit.execute(); // <-- THIS MATTERS
+    }
+
+    public static class ALUSnapshot {
+
+        public int inputA;
+        public int inputB;
+        public int output;
+        public String operation;
+    }
+
+    private ALUSnapshot lastALU = new ALUSnapshot();
+
+    public ALUSnapshot getLastALU() {
+        return lastALU;
+    }
+
+    // ADD OTHER PARTS
     public ProgramCounter getProgramCounter() {
         return pc;
     }
@@ -50,15 +88,19 @@ public class CPU {
         return registers;
     }
 
-    public boolean step() {
-        int address = pc.get();
-        int instruction = ram.read(address);
-
-        bus.send(instruction);
-        ir.loadFromBus(bus);
-
-        pc.increment();
-
-        return controlUnit.execute();
+    public ALU getALU() {
+        return alu;
     }
+
+    public RAM getRAM() {
+        return ram;
+    }
+
+    public void updateALU(int a, int b, int result, String op) {
+        lastALU.inputA = a;
+        lastALU.inputB = b;
+        lastALU.output = result;
+        lastALU.operation = op;
+    }
+
 }

@@ -1,7 +1,8 @@
 package hardware;
 
-import assembler.*;
 import java.util.List;
+
+import assembler.Assembler;
 
 public class Motherboard {
 
@@ -31,7 +32,9 @@ public class Motherboard {
      * Runs until HALT
      */
     public void run() {
-        while (cpu.step());
+        while (cpu.step()) {
+            // keep running until HALT
+        }
     }
 
     public CPU getCPU() {

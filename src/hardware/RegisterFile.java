@@ -39,4 +39,12 @@ public class RegisterFile {
             throw new IndexOutOfBoundsException("Register index out of bounds");
         }
     }
+
+    public int[] getAll() {
+    int[] values = new int[8]; // assuming 8 registers
+    for (int i = 0; i < 8; i++) {
+        values[i] = read(i);
+    }
+    return values;
+}
 }

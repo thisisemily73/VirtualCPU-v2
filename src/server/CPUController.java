@@ -6,9 +6,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+import com.google.gson.Gson;
+
 public class CPUController {
 
     private final CPUService cpuService;
+
+    private final Gson gson = new Gson();
 
     public CPUController(CPUService cpuService) {
         this.cpuService = cpuService;
@@ -41,7 +45,7 @@ public class CPUController {
                 return;
             }
 
-            sendJson(exchange, 200, toJson(cpuService.getState()));
+            sendJson(exchange, 200, gson.toJson(cpuService.getState()));
         };
     }
 
@@ -54,7 +58,7 @@ public class CPUController {
                 return;
             }
 
-            sendJson(exchange, 200, toJson(cpuService.step()));
+            sendJson(exchange, 200, gson.toJson(cpuService.step()));
         };
     }
 
@@ -68,7 +72,7 @@ public class CPUController {
             }
 
             cpuService.reset();
-            sendJson(exchange, 200, toJson(cpuService.getState()));
+            sendJson(exchange, 200, gson.toJson(cpuService.getState()));
         };
     }
 
@@ -87,7 +91,7 @@ public class CPUController {
             int[] program = parseIntArray(text);
             cpuService.loadProgram(program);
 
-            sendJson(exchange, 200, toJson(cpuService.getState()));
+            sendJson(exchange, 200, gson.toJson(cpuService.getState()));
         };
     }
 
@@ -99,31 +103,6 @@ public class CPUController {
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(bytes);
         }
-    }
-
-    private static String toJson(CPUStateDTO s) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("{");
-        sb.append("\"pc\":").append(s.pc).append(",");
-        sb.append("\"registers\":[");
-
-        for (int i = 0; i < s.registers.length; i++) {
-            if (i > 0) sb.append(",");
-            sb.append(s.registers[i]);
-        }
-
-        sb.append("],");
-        sb.append("\"alu\":").append(s.alu).append(",");
-        sb.append("\"zeroFlag\":").append(s.zeroFlag).append(",");
-        sb.append("\"carryFlag\":").append(s.carryFlag).append(",");
-        sb.append("\"negativeFlag\":").append(s.negativeFlag).append(",");
-        sb.append("\"currentInstruction\":").append(s.currentInstruction).append(",");
-        sb.append("\"currentLine\":").append(s.currentLine).append(",");
-        sb.append("\"halted\":").append(s.halted);
-        sb.append("}");
-
-        return sb.toString();
     }
 
     private static int[] parseIntArray(String text) {

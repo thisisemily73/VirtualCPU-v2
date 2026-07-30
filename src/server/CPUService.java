@@ -4,6 +4,7 @@ import hardware.CPU;
 import hardware.RAM;
 
 public class CPUService {
+
     private RAM ram;
     private CPU cpu;
     private boolean halted = false;
@@ -50,13 +51,28 @@ public class CPUService {
 
     private CPUStateDTO buildState(int pc) {
         CPUStateDTO s = new CPUStateDTO();
+
+        s.alu = new CPUStateDTO.ALUStateDTO();
+
         s.pc = pc;
 
-        for (int i = 0; i < 8; i++) {
-            s.registers[i] = cpu.getRegisters().read(i);
+        int[] regs = cpu.getState().registers;
+        System.arraycopy(regs, 0, s.registers, 0, regs.length);
+
+        CPU.ALUSnapshot aluSnap = cpu.getLastALU();
+
+        if (aluSnap != null) {
+            s.alu.inputA = aluSnap.inputA;
+            s.alu.inputB = aluSnap.inputB;
+            s.alu.output = aluSnap.output;
+            s.alu.operation = aluSnap.operation;
+        } else {
+            s.alu.inputA = 0;
+            s.alu.inputB = 0;
+            s.alu.output = 0;
+            s.alu.operation = "IDLE";
         }
 
-        s.alu = 0;
         s.zeroFlag = false;
         s.carryFlag = false;
         s.negativeFlag = false;

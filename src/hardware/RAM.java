@@ -3,14 +3,12 @@ package hardware;
 /**
  * RAM (Random Access Memory)
  *
- * Role in CPU:
- * Stores both instructions and data.
- * Acts as the main memory unit accessed during program execution.
+ * Role in CPU: Stores both instructions and data. Acts as the main memory unit
+ * accessed during program execution.
  *
- * Interacts with:
- * - ProgramCounter (provides memory address)
- * - InstructionRegister (loads current instruction)
- * - ControlUnit (reads/writes data)
+ * Interacts with: - ProgramCounter (provides memory address) -
+ * InstructionRegister (loads current instruction) - ControlUnit (reads/writes
+ * data)
  */
 public class RAM {
 
@@ -30,7 +28,6 @@ public class RAM {
         memory[address] = value & 0xFFFF;
     }
 
-    
     /**
      * Reads a 16-bit value from the specified memory address.
      */
@@ -39,5 +36,9 @@ public class RAM {
             throw new IllegalArgumentException("Address out of bounds");
         }
         return memory[address] & 0xFFFF;
+    }
+
+    public int[] getAll() {
+        return memory.clone();
     }
 }
